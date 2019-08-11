@@ -84,7 +84,7 @@ namespace Client
 
             player.Draw(gameTime, spriteBatch);
             networkManager.Draw(gameTime, spriteBatch);
-            spriteBatch.DrawString(Font, text, new Vector2((graphics.PreferredBackBufferWidth - size.X) / 2, 100), networkManager.connected ? Color.Green : Color.Red);
+            spriteBatch.DrawString(Font, text, new Vector2((graphics.PreferredBackBufferWidth - size.X) / 2, 100), networkManager.connected ? Color.GreenYellow : Color.Red);
 
             if (!networkManager.connected)
                 if (gameTime.TotalGameTime.TotalSeconds % 2 > 1)
