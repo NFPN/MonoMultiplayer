@@ -36,7 +36,6 @@ namespace Client.Sprites
             sprites = new List<Sprite>();
             this.heart = hearth;
             Lifes = 10;
-            Color = new Color(Random.Next(255), Random.Next(255), Random.Next(255));
             isConected = true;
             if (Position.X == 100 && Position.Y == 100 && start)
                 canHave = false;
@@ -69,7 +68,6 @@ namespace Client.Sprites
             fontSize = Font.MeasureString(Username);
             sprites = new List<Sprite>();
             this.heart = hearth;
-            Color = new Color(Random.Next(255), Random.Next(255), Random.Next(255));
             if (Position.X == 100 && Position.Y == 100 && start)
                 canHave = false;
             
