@@ -1,9 +1,10 @@
-﻿using LiteNetLib;
-using LiteNetLib.Utils;
+﻿using Client.Scripts;
+using Client.Sprites;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Diagnostics;
 
 namespace Client
 {
@@ -14,133 +15,90 @@ namespace Client
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+        Texture2D square;
 
-        private NetManager client;
-        private Vector2 poz;
-        private float velocity = 10;
-        private string host;
+        public SpriteFont Font { get; private set; }
 
+        NetworkManager networkManager;
+        private Player player;
+        private string text;
+        private Vector2 size;
+        private Vector2 txt;
 
-        Texture2D player;
-        Vector2 otherPoz;
-        private bool canDraw;
+        public Random Random { get; }
 
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+            Random = new Random();
         }
 
-        /// <summary>
-        /// Allows the game to perform any initialization it needs to before starting to run.
-        /// This is where it can query for any required services and load any non-graphic
-        /// related content.  Calling base.Initialize will enumerate through any components
-        /// and initialize them as well.
-        /// </summary>
+
         protected override void Initialize()
         {
-            otherPoz = new Vector2(0, 0);
-            var args = Environment.GetCommandLineArgs();
-            if (args.Length > 1)
-            {
-                host = args[1];
-            }
-            else
-            {
-                host = "localhost";
-            }
-
-            // TODO: Add your initialization logic here
-            EventBasedNetListener listener = new EventBasedNetListener();
-            client = new NetManager(listener);
-            client.Start();
-            client.Connect(host /* host ip or name */, 9050 /* port */, "SomeConnectionKey" /* text key or NetDataWriter */);
-            poz.Y = 100;
-            poz.X = 300;
-
-            listener.NetworkReceiveEvent += (fromPeer, dataReader, deliveryMethod) =>
-            {
-                var msg = dataReader.GetString(100 /* max length of string */);
-                Console.WriteLine("We got: {0}", msg);
-                if (!msg.Contains("Hello"))
-                {
-                    var str = msg.Split(',');
-                    otherPoz.X = float.Parse(str[0]);
-                    otherPoz.Y = float.Parse(str[1]);
-                }
-                else { canDraw = true; }
-
-
-                dataReader.Recycle();
-            };
+            graphics.PreferredBackBufferWidth = 1280;
+            graphics.PreferredBackBufferHeight = 720;
+            graphics.ApplyChanges();
             base.Initialize();
         }
 
-        /// <summary>
-        /// LoadContent will be called once per game and is the place to load
-        /// all of your content.
-        /// </summary>
         protected override void LoadContent()
         {
-            // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            player = Content.Load<Texture2D>("square");
-            // TODO: use this.Content to load your game content here
+            square = Content.Load<Texture2D>("square");
+            Font = Content.Load<SpriteFont>("Font");
+            txt = Font.MeasureString("attempting to reconnect");
+            var comic = Content.Load<SpriteFont>("Comic");
+            var args = Environment.GetCommandLineArgs();
+            string username = $"Guest-{Random.Next(10000)}";
+
+            if (args.Length >= 4)
+                networkManager = new NetworkManager(square, args[3].Equals("username") ? username : args[3], args[1], int.Parse(args[2]),this,comic);
+            else 
+                networkManager = new NetworkManager(square, username, "localhost", 13131,this,comic);
+           
+            player = new Player(square,comic) { Position = new Vector2(100, 100), Username = args.Length >= 4 ? (args[3].Equals("username") ? username : args[3]) : username };
+            networkManager.Initialize();
         }
 
-        /// <summary>
-        /// UnloadContent will be called once per game and is the place to unload
-        /// game-specific content.
-        /// </summary>
+
         protected override void UnloadContent()
         {
-            // TODO: Unload any non ContentManager content here
+
         }
 
-        /// <summary>
-        /// Allows the game to run logic such as updating the world,
-        /// checking for collisions, gathering input, and playing audio.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            client.PollEvents();
-
-
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
-            if (Keyboard.GetState().IsKeyDown(Keys.Left))
-                poz.X -= velocity;
-            if (Keyboard.GetState().IsKeyDown(Keys.Right))
-                poz.X += velocity;
-            if (Keyboard.GetState().IsKeyDown(Keys.Up))
-                poz.Y -= velocity;
-            if (Keyboard.GetState().IsKeyDown(Keys.Down))
-                poz.Y += velocity;
-            // TODO: Add your update logic here
-
-            NetDataWriter writer = new NetDataWriter();                 // Create writer class
-            writer.Put($"{poz.X},{poz.Y}");                                // Put some string
-            client.SendToAll(writer, DeliveryMethod.Unreliable);             // Send with reliability
-
+            text = networkManager.connected ? "CONNECTED" : "DISCONNECTED";
+            size = Font.MeasureString(text);
+            networkManager.Update(player, gameTime);
             base.Update(gameTime);
         }
 
-        /// <summary>
-        /// This is called when the game should draw itself.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
+
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
             spriteBatch.Begin();
-            // TODO: Add your drawing code here
-            spriteBatch.Draw(player, poz, Color.Blue);
-            if (canDraw)
-                spriteBatch.Draw(player, otherPoz, Color.Red);
+
+            player.Draw(gameTime, spriteBatch);
+            networkManager.Draw(gameTime, spriteBatch);
+            spriteBatch.DrawString(Font, text, new Vector2((graphics.PreferredBackBufferWidth - size.X) / 2, 100), networkManager.connected ? Color.Green : Color.Red);
+
+            if (!networkManager.connected)
+                if (gameTime.TotalGameTime.TotalSeconds % 2 > 1)
+                    spriteBatch.DrawString(Font, "attempting to reconnect", new Vector2((graphics.PreferredBackBufferWidth - txt.X) / 2 + 50, 130), Color.White, 0, new Vector2(0, 0), .6f, SpriteEffects.None, 1);
 
             spriteBatch.End();
             base.Draw(gameTime);
+        }
+
+
+        protected override void OnExiting(object sender, EventArgs args)
+        {
+            networkManager.Disconect();
+            base.OnExiting(sender, args);
         }
     }
 }
