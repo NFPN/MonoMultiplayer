@@ -59,7 +59,7 @@ namespace Client
             var args = Environment.GetCommandLineArgs();
             string username = $"Guest-{Random.Next(10000)}";
 
-            var player = new Player(square, comic, heart) { Position = new Vector2(100, 100), Username = args.Length >= 4 ? (args[3].Equals("username") ? username : args[3]) : username, Bullet = new Bullet(Content.Load<Texture2D>("Bullet")) };
+            var player = new Player(square, comic, heart) { Position = new Vector2(100, 100), Username = args.Length >= 7 ? (args[3].Equals("username") ? username : args[3]) : username, Bullet = new Bullet(Content.Load<Texture2D>("Bullet")), Color = new Color(int.Parse(args[4]), int.Parse(args[5]), int.Parse(args[6])) };
 
             if (args.Length >= 4)
                 networkManager = new NetworkManager(square, args[3].Equals("username") ? username : args[3], args[1], int.Parse(args[2]), this, comic, new Bullet(Content.Load<Texture2D>("Bullet")), heart, player);
