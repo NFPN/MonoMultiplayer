@@ -13,17 +13,20 @@ namespace Client
     /// </summary>
     public class Game1 : Game
     {
-        GraphicsDeviceManager graphics;
+        public static int Height = 720;
+        public static int Width = 1280;
+
+        public GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         Texture2D square;
 
         public SpriteFont Font { get; private set; }
 
         NetworkManager networkManager;
-        private Player player;
         private string text;
         private Vector2 size;
         private Vector2 txt;
+        private Camera camera;
 
         public Random Random { get; }
 
@@ -40,25 +43,29 @@ namespace Client
             graphics.PreferredBackBufferWidth = 1280;
             graphics.PreferredBackBufferHeight = 720;
             graphics.ApplyChanges();
+            IsMouseVisible = true;
             base.Initialize();
+            camera = new Camera();
         }
 
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
             square = Content.Load<Texture2D>("square");
+            var heart = Content.Load<Texture2D>("heart");
             Font = Content.Load<SpriteFont>("Font");
             txt = Font.MeasureString("attempting to reconnect");
             var comic = Content.Load<SpriteFont>("Comic");
             var args = Environment.GetCommandLineArgs();
             string username = $"Guest-{Random.Next(10000)}";
 
+            var player = new Player(square, comic, heart) { Position = new Vector2(100, 100), Username = args.Length >= 4 ? (args[3].Equals("username") ? username : args[3]) : username, Bullet = new Bullet(Content.Load<Texture2D>("Bullet")) };
+
             if (args.Length >= 4)
-                networkManager = new NetworkManager(square, args[3].Equals("username") ? username : args[3], args[1], int.Parse(args[2]),this,comic);
-            else 
-                networkManager = new NetworkManager(square, username, "localhost", 13131,this,comic);
-           
-            player = new Player(square,comic) { Position = new Vector2(100, 100), Username = args.Length >= 4 ? (args[3].Equals("username") ? username : args[3]) : username };
+                networkManager = new NetworkManager(square, args[3].Equals("username") ? username : args[3], args[1], int.Parse(args[2]), this, comic, new Bullet(Content.Load<Texture2D>("Bullet")), heart, player);
+            else
+                networkManager = new NetworkManager(square, username, "localhost", 13131, this, comic, new Bullet(Content.Load<Texture2D>("Bullet")), heart, player);
+
             networkManager.Initialize();
         }
 
@@ -72,23 +79,25 @@ namespace Client
         {
             text = networkManager.connected ? "CONNECTED" : "DISCONNECTED";
             size = Font.MeasureString(text);
-            networkManager.Update(player, gameTime);
+            networkManager.Update(gameTime);
+            camera.Follow(networkManager.player);
             base.Update(gameTime);
         }
 
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
-            spriteBatch.Begin();
+            GraphicsDevice.Clear(Color.Purple);
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp /*,transformMatrix: camera.Transform*/);
 
-            player.Draw(gameTime, spriteBatch);
             networkManager.Draw(gameTime, spriteBatch);
             spriteBatch.DrawString(Font, text, new Vector2((graphics.PreferredBackBufferWidth - size.X) / 2, 100), networkManager.connected ? Color.GreenYellow : Color.Red);
 
             if (!networkManager.connected)
                 if (gameTime.TotalGameTime.TotalSeconds % 2 > 1)
-                    spriteBatch.DrawString(Font, "attempting to reconnect", new Vector2((graphics.PreferredBackBufferWidth - txt.X) / 2 + 50, 130), Color.White, 0, new Vector2(0, 0), .6f, SpriteEffects.None, 1);
+                    spriteBatch.DrawString(Font, "attempting to reconnect", new Vector2((graphics.PreferredBackBufferWidth - txt.X) / 2 + 22, 130), Color.White, 0, new Vector2(0, 0), .8f, SpriteEffects.None, 1);
+
+
 
             spriteBatch.End();
             base.Draw(gameTime);
