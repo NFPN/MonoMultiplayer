@@ -16,6 +16,7 @@ namespace Client.Sprites
         private Vector2 fontSize;
         private Random Random = new Random();
         SpriteFont Font;
+        public string Ping;
         public Player(Texture2D texture, SpriteFont spriteFont) : base(texture: texture) {
             Font = spriteFont;
         }
@@ -38,6 +39,7 @@ namespace Client.Sprites
             scale = float.Parse(obj[11]);
             Color = new Color(int.Parse(obj[12]), int.Parse(obj[13]), int.Parse(obj[14]), int.Parse(obj[15]));
             Username = obj[16];
+            Ping = obj[17];
             fontSize = Font.MeasureString(Username);
 
         }
@@ -46,6 +48,8 @@ namespace Client.Sprites
         {
             base.Draw(gameTime, spriteBatch);
             spriteBatch.DrawString(Font, Username, new Vector2(Position.X -45,Position.Y - 70), Color.White);
+            spriteBatch.DrawString(Font, $"{Ping} ms", new Vector2(Position.X - 45, Position.Y), Color.White);
+
         }
 
         public override void Update(GameTime gameTime)
@@ -83,7 +87,7 @@ namespace Client.Sprites
         public string Serialize()
         {
                         //Position X|Y           Rotation     Origin X|Y            Direction X|Y            Rotation Velocity  Linear Velocity
-            return $"{Position.X}|{Position.Y}|{_rotation}|{Origin.X}|{Origin.Y}|{Direction.X}|{Direction.Y}|{RotationVelocity}|{LinearVelocity}|{LifeSpan}|{IsRemoved}|{scale}|{Color.R}|{Color.G}|{Color.B}|{Color.A}|{Username}";
+            return $"{Position.X}|{Position.Y}|{_rotation}|{Origin.X}|{Origin.Y}|{Direction.X}|{Direction.Y}|{RotationVelocity}|{LinearVelocity}|{LifeSpan}|{IsRemoved}|{scale}|{Color.R}|{Color.G}|{Color.B}|{Color.A}|{Username}|{Ping}";
         }
 
         public void UpdateClass(string serializedObject)
@@ -103,6 +107,7 @@ namespace Client.Sprites
             scale = float.Parse(obj[11]);
             Color = new Color(int.Parse(obj[12]), int.Parse(obj[13]), int.Parse(obj[14]), int.Parse(obj[15]));
             Username = obj[16];
+            Ping = obj[17];
 
         }
     }

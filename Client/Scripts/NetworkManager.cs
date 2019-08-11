@@ -138,11 +138,12 @@ namespace Client.Scripts
             timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             client.PollEvents();
-
             player.Update(gameTime);
 
             if (!connected)
                 return;
+
+            player.Ping = server.Ping.ToString();
 
             if (timer > timeController)
             {
@@ -168,7 +169,7 @@ namespace Client.Scripts
                 if (!item.Value.Username.Equals(username))
                     item.Value.Draw(gameTime, spriteBatch);
 
-
+            spriteBatch.DrawString(Font, $"{server.Ping} ms", new Vector2(1200, 10), Color.White);
 
         }
 
