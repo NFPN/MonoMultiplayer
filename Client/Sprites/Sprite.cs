@@ -56,7 +56,7 @@ namespace Client.Sprites
 
         public virtual void Update(GameTime gameTime) { }
 
-        public object Clone()
+        public virtual object Clone()
         {
             return this.MemberwiseClone();
         }
