@@ -1,80 +1,76 @@
-﻿using Client.Sprites;
+﻿using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using LiteNetLib;
 using LiteNetLib.Utils;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
 using Utils;
+using Client.Sprites;
+using Microsoft.Xna.Framework;
+using System.Diagnostics;
+using System.Threading;
 
 namespace Client.Scripts
 {
     public class NetworkManager
     {
-        public bool connected;
-        public Player player;
 
-        private readonly SpriteFont Font;
-        private readonly Texture2D defaultTexture;
-        private ContentManager gameContent;
+        private Texture2D defaultTexture;
 
-        private readonly int port;
-        private readonly string hostname;
-        private readonly string username;
-        private readonly Game1 instance;
-        private readonly Bullet bullet;
-        private readonly Texture2D heart;
-        private Texture2D transparentRect;
-
+        private string hostname;
+        private int port;
+        private string username;
+        private Game1 instance;
         private NetPeer server;
         private NetManager client;
         private NetPacketProcessor processor;
-        private Thread connectionThread;
-        private IOrderedEnumerable<Player> list;
+
         private Dictionary<string, Player> otherPlayers;
 
-        private float timer;
+        public bool connected;
         private float timeController = 10f;
-
+        private float timer;
+        private Thread connectionThread;
+        SpriteFont Font;
+        private Bullet bullet;
+        private Texture2D heart;
+        public Player player;
         private string feedText;
         private float feedController;
-        private List<string> lockList;
+        List<string> lockList;
+        private IOrderedEnumerable<Player> list;
 
-        public NetworkManager(ContentManager content, Texture2D defaultTexture, string username, string hostname, int port, Game1 game1, SpriteFont spriteFont, Bullet bullet, Texture2D heart, Player player)
+        public NetworkManager(Texture2D defaultTexture, string username, string hostname, int port, Game1 game1, SpriteFont spriteFont, Bullet bullet, Texture2D heart, Player player)
         {
-            gameContent = content;
-
             this.defaultTexture = defaultTexture;
-            this.bullet = bullet;
-            this.player = player;
-            this.heart = heart;
+            this.hostname = hostname;
             this.port = port;
+            this.username = username;
             this.instance = game1;
             this.Font = spriteFont;
-            this.hostname = hostname;
-            this.username = username;
+            this.bullet = bullet;
+            this.heart = heart;
+            this.player = player;
         }
 
         public void Initialize()
         {
+
             lockList = new List<string>();
             processor = new NetPacketProcessor();
             otherPlayers = new Dictionary<string, Player>();
-
-            transparentRect = gameContent.Load<Texture2D>("Transparent");
-
             var listener = new EventBasedNetListener();
             client = new NetManager(listener);
-            client.Start();
-
             processor.SubscribeReusable<Packet, NetPeer>(OnPacketReceive);
+            client.Start();
             listener.NetworkReceiveEvent += OnReceive;
+
 
             connectionThread = GetConnectionThread();
             connectionThread.Start();
+
         }
 
         private Thread GetConnectionThread()
@@ -101,9 +97,9 @@ namespace Client.Scripts
                 }
             });
         }
-
         private void OnPacketReceive(Packet packet, NetPeer peer)
         {
+
             switch (packet.PacketType)
             {
                 case PacketType.MESSAGE:
@@ -114,17 +110,17 @@ namespace Client.Scripts
                     {
                         feedText = packet.Message;
                         feedController = timer + 8;
-                        if (packet.Username == username)
+                        if (packet.Username == this.username)
                             player.AddKill();
                     }
                     if (packet.Message.StartsWith("Shoot"))
                     {
-                        if (packet.Username == username)
+                        if (packet.Username == this.username)
                         {
                             var bt = bullet.Clone() as Bullet;
                             bt.UpdateBullet(packet.Bullets[0]);
-                            var buleto = player.SpriteList.Find(i => ((Bullet)i).ID == bt.ID);
-                            player.SpriteList.Remove(buleto);
+                            var buleto = player.sprites.Find(i => ((Bullet)i).ID == bt.ID);
+                            player.sprites.Remove(buleto);
                         }
                     }
                     else
@@ -153,10 +149,11 @@ namespace Client.Scripts
                         {
                             otherPlayers[packet.Username].UpdateClass(packet.Message);
                             otherPlayers[packet.Username].UpdateBullet(packet.Bullets);
+                          
                         }
                         else
                         {
-                            var player = new Player(packet.Message, defaultTexture, Font, heart) { Bullet = this.bullet, IsConected = true };
+                            var player = new Player(packet.Message, defaultTexture, Font, heart) { Bullet = this.bullet, isConected = true };
                             otherPlayers.Add(packet.Username, player);
                         }
                     break;
@@ -164,8 +161,13 @@ namespace Client.Scripts
                 case PacketType.DISCONNECT:
                     otherPlayers.Remove(packet.Username);
                     break;
+
+
             }
+
         }
+
+
 
         private void OnReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
         {
@@ -176,7 +178,7 @@ namespace Client.Scripts
         {
             foreach (var item in otherPlayers.Values)
             {
-                item.IsConected = false;
+                item.isConected = false;
             }
 
             timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -190,12 +192,13 @@ namespace Client.Scripts
 
             player.Ping = server.Ping.ToString();
 
+
             if (timer > timeController)
             {
                 timeController = timer + 15;
                 foreach (var item in otherPlayers.ToArray())
                 {
-                    if (item.Value.IsConected == false)
+                    if (item.Value.isConected == false)
                     {
                         otherPlayers.Remove(item.Key);
                     }
@@ -204,7 +207,7 @@ namespace Client.Scripts
 
             foreach (var item in otherPlayers)
             {
-                foreach (var bullet in item.Value.SpriteList)
+                foreach (var bullet in item.Value.sprites)
                 {
                     var b = bullet as Bullet;
                     if (player.HitBox.Intersects(b.HitBox))
@@ -216,6 +219,7 @@ namespace Client.Scripts
                             lockList.Add(b.ID);
                             player.DealDamage();
                             processor.Send(server, new Packet($"Shoot {b.ParentName} => {player.Username}") { Username = b.ParentName, Bullets = new string[] { b.Serialize() } }, DeliveryMethod.Unreliable);
+
                         }
                         else
                         {
@@ -226,12 +230,14 @@ namespace Client.Scripts
                 }
             }
 
+
             var listinha = new List<string>();
-            foreach (var bala in player.SpriteList)
+            foreach (var bala in player.sprites)
             {
                 listinha.Add(((Bullet)bala).Serialize());
+
             }
-            player.IsConected = true;
+            player.isConected = true;
 
             var packet = new Packet
             {
@@ -240,6 +246,7 @@ namespace Client.Scripts
                 Message = player.Serialize(),
                 Bullets = listinha.ToArray()
             };
+
 
             processor.Send(server, packet, DeliveryMethod.ReliableOrdered);
 
@@ -252,64 +259,65 @@ namespace Client.Scripts
                 rank.Add(item);
             }
             list = rank.OrderByDescending(i => i.Kills);
+            
         }
 
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
+            foreach (var item in otherPlayers)
+                if (!item.Value.Username.Equals(username))
+                    item.Value.Draw(gameTime, spriteBatch);
+
+            player.Draw(gameTime, spriteBatch);
+
+
+            spriteBatch.DrawString(Font, $"{server.Ping} ms", new Vector2(1200, 10), Color.White);
+
+            if (!string.IsNullOrEmpty(feedText))
+            {
+                if (timer < feedController)
+                {
+                    var sz = instance.Font.MeasureString(feedText);
+                    spriteBatch.DrawString(instance.Font, feedText, new Vector2((Game1.Width - sz.X) / 2, 10), Color.White);
+                }
+                else
+                    feedText = null;
+
+            }
+
+            for (int i = 1; i < player.Lifes + 1; i++)
+            {
+                spriteBatch.Draw(player.heart, new Vector2(i * 33, 10), Color.White);
+            }
+
+
+            //for (int i = 1; i < (orderedList.Count >= 5 ? 6 : orderedList.Count); i++)
+            //{
+            //    var tt = $"{orderedList[i].Username} --> K/D : {orderedList[i].Kills}/{orderedList[i].Deaths}";
+            //    var size = Font.MeasureString(tt);
+            //    spriteBatch.DrawString(Font, tt, new Vector2(1280 - size.X - 30, i * 20), Color.White);
+            //}
+
+            var start = 300;
+
+            var test = "Leaderboard";
+            var size = Font.MeasureString(test);
+            spriteBatch.DrawString(Font, test, new Vector2(Game1.Width - size.X - 60, start -30), Color.White);
+
             try
             {
-                foreach (var item in otherPlayers)
-                    if (!item.Value.Username.Equals(username))
-                        item.Value.Draw(gameTime, spriteBatch);
-
-                player.Draw(gameTime, spriteBatch);
-
-                spriteBatch.DrawString(Font, $"{server.Ping} ms", new Vector2(1200, 10), Color.White);
-
-                if (!string.IsNullOrEmpty(feedText))
+                for (int i = 0; i < (list.Count() >= 5 ? 5 : list.Count()); i++)
                 {
-                    if (timer < feedController)
-                    {
-                        var sz = instance.Font.MeasureString(feedText);
-                        spriteBatch.DrawString(instance.Font, feedText, new Vector2((Game1.Width - sz.X) / 2, 10), Color.White);
-                    }
-                    else
-                        feedText = null;
+                    test = $" {i + 1}--- {list.ElementAt(i).Username} --- {list.ElementAt(i).Kills}/{list.ElementAt(i).Deaths}";
+                    size = Font.MeasureString(test);
+                    spriteBatch.DrawString(Font, test, new Vector2(Game1.Width - size.X - 10, start + i * 20), Color.White);
                 }
-
-                for (int i = 1; i < player.Lifes + 1; i++)
-                {
-                    spriteBatch.Draw(player.Heart, new Vector2(i * 33, 10), Color.White);
-                }
-
-                var start = 300;
-                var test = "Leaderboard";
-                var size = Font.MeasureString(test);
-                spriteBatch.DrawString(Font, test, new Vector2(Game1.Width - size.X - 75, start - 30), Color.White);
-
-
-                //Need to fix name positions
-                try
-                {
-                    for (int i = 0; i < (list.Count() >= 5 ? 5 : list.Count()); i++)
-                    {
-                        var pos = new Vector2(Game1.Width - size.X - 90, start + i * 20);
-
-                        Rectangle destinationRectangle = new Rectangle((int)pos.X, (int)pos.Y, 180, 25);
-                        spriteBatch.Draw(transparentRect, destinationRectangle, Color.White);
-
-                        test = $" {i + 1}- {list.ElementAt(i).Username} - {list.ElementAt(i).Kills}/{list.ElementAt(i).Deaths}";
-                        size = Font.MeasureString(test);
-                        spriteBatch.DrawString(Font, test, pos, Color.White);
-                    }
-                }
-                catch { }
-
-                test = $"K/D : {player.Kills}/{player.Deaths}";
-                size = Font.MeasureString(test);
-                spriteBatch.DrawString(Font, test, new Vector2(Game1.Width - size.X - 10, 690), Color.White);
             }
             catch { }
+
+            test = $"K/D : {player.Kills}/{player.Deaths}";
+            size = Font.MeasureString(test);
+            spriteBatch.DrawString(Font, test, new Vector2(Game1.Width - size.X - 10, 690), Color.White);
         }
 
         public void Disconect()

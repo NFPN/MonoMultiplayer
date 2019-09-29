@@ -2,6 +2,10 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Client.Sprites
 {
@@ -52,6 +56,10 @@ namespace Client.Sprites
 
         public virtual void Update(GameTime gameTime) { }
 
-        public virtual object Clone() => MemberwiseClone();
+        public virtual object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
     }
 }

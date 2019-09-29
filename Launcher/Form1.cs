@@ -1,8 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Launcher
@@ -26,9 +32,9 @@ namespace Launcher
             var port = txtPort.Text;
             var color = txtColor.Text;
 
-            if (!Regex.IsMatch(user, @"^[a-zA-Z]+$") || user.Length > 12)
+            if (!Regex.IsMatch(user, @"^[a-zA-Z]+$") || user.Length > 16)
             {
-                MessageBox.Show("Por favor, usa um nick normal parça, no maximo 12 letras e sem acentos e frescuras :)");
+                MessageBox.Show("Por favor, usa um nick normal parça, no maximo 16 letras e sem acentos e frescuras :)");
                 return;
             }
 
@@ -59,6 +65,8 @@ namespace Launcher
                 red = int.Parse(hexColor.Substring(0, 2), NumberStyles.AllowHexSpecifier);
                 green = int.Parse(hexColor.Substring(2, 2), NumberStyles.AllowHexSpecifier);
                 blue = int.Parse(hexColor.Substring(4, 2), NumberStyles.AllowHexSpecifier);
+
+
             }
             else if (hexColor.Length == 3)
             {
@@ -85,7 +93,8 @@ namespace Launcher
             {
                 panel1.BackColor = HexToColor(txtColor.Text);
             }
-            catch { }
+            catch
+            { }
         }
     }
 }

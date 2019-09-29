@@ -30,6 +30,7 @@
         {
             this.txtHostname = new System.Windows.Forms.TextBox();
             this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.txtUsername = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
@@ -46,7 +47,7 @@
             this.txtHostname.Name = "txtHostname";
             this.txtHostname.Size = new System.Drawing.Size(271, 29);
             this.txtHostname.TabIndex = 1;
-            this.txtHostname.Text = "177.52.28.212";
+            this.txtHostname.Text = "HOSTNAME";
             this.txtHostname.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // button1
@@ -62,6 +63,20 @@
             this.button1.Text = "Conectar";
             this.button1.UseVisualStyleBackColor = false;
             this.button1.Click += new System.EventHandler(this.Button1_Click);
+            // 
+            // button2
+            // 
+            this.button2.BackColor = System.Drawing.Color.White;
+            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button2.Font = new System.Drawing.Font("Comic Sans MS", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button2.ForeColor = System.Drawing.Color.Navy;
+            this.button2.Location = new System.Drawing.Point(835, 12);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(35, 36);
+            this.button2.TabIndex = 3;
+            this.button2.Text = "X";
+            this.button2.UseVisualStyleBackColor = false;
+            this.button2.Click += new System.EventHandler(this.Button2_Click);
             // 
             // label1
             // 
@@ -83,7 +98,7 @@
             this.txtUsername.Name = "txtUsername";
             this.txtUsername.Size = new System.Drawing.Size(271, 29);
             this.txtUsername.TabIndex = 0;
-            this.txtUsername.Text = "username";
+            this.txtUsername.Text = "USERNAME";
             this.txtUsername.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // panel1
@@ -103,7 +118,7 @@
             this.txtColor.Name = "txtColor";
             this.txtColor.Size = new System.Drawing.Size(271, 29);
             this.txtColor.TabIndex = 3;
-            this.txtColor.Text = "#256385";
+            this.txtColor.Text = "COLOR HEX";
             this.txtColor.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.txtColor.TextChanged += new System.EventHandler(this.TxtColor_TextChanged);
             // 
@@ -116,7 +131,7 @@
             this.txtPort.Name = "txtPort";
             this.txtPort.Size = new System.Drawing.Size(271, 29);
             this.txtPort.TabIndex = 2;
-            this.txtPort.Text = "13131";
+            this.txtPort.Text = "PORT";
             this.txtPort.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // Form1
@@ -131,11 +146,12 @@
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.txtUsername);
             this.Controls.Add(this.label1);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.txtHostname);
             this.DoubleBuffered = true;
             this.ForeColor = System.Drawing.SystemColors.ControlLight;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.MaximizeBox = false;
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -149,6 +165,7 @@
 
         private System.Windows.Forms.TextBox txtHostname;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txtUsername;
         private System.Windows.Forms.Panel panel1;

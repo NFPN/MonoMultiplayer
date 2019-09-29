@@ -1,8 +1,10 @@
-﻿using LiteNetLib;
-using LiteNetLib.Utils;
+﻿using Client.Scripts;
+using Client.Sprites;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
+using System.Diagnostics;
 
 namespace Client
 {
@@ -11,105 +13,81 @@ namespace Client
     /// </summary>
     public class Game1 : Game
     {
-        public static int Height { get; private set; }
-        public static int Width { get; private set; }
+        public static int Height = 720;
+        public static int Width = 1280;
+
+        public GraphicsDeviceManager graphics;
+        SpriteBatch spriteBatch;
+        Texture2D square;
 
         public SpriteFont Font { get; private set; }
-        public GraphicsDeviceManager graphics;
 
+        NetworkManager networkManager;
         private string text;
-        private Vector2 txt;
         private Vector2 size;
+        private Vector2 txt;
         private Camera camera;
-        private Texture2D square;
-        private SpriteBatch spriteBatch;
-        private NetworkManager networkManager;
 
-        Texture2D player;
-        Vector2 otherPoz;
-        private bool canDraw;
+        public Random Random { get; }
 
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+            Random = new Random();
         }
+
 
         protected override void Initialize()
         {
-            Width = graphics.PreferredBackBufferWidth = 1280;
-            Height = graphics.PreferredBackBufferHeight = 720;
+            graphics.PreferredBackBufferWidth = 1280;
+            graphics.PreferredBackBufferHeight = 720;
             graphics.ApplyChanges();
             IsMouseVisible = true;
             base.Initialize();
+            camera = new Camera();
         }
 
-        /// <summary>
-        /// LoadContent will be called once per game and is the place to load
-        /// all of your content.
-        /// </summary>
         protected override void LoadContent()
         {
-            Font = Content.Load<SpriteFont>("Font");
-            square = Content.Load<Texture2D>("square");
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            txt = Font.MeasureString("attempting to reconnect");
-
-            var args = Environment.GetCommandLineArgs();
+            square = Content.Load<Texture2D>("square");
             var heart = Content.Load<Texture2D>("heart");
+            Font = Content.Load<SpriteFont>("Font");
+            txt = Font.MeasureString("attempting to reconnect");
             var comic = Content.Load<SpriteFont>("Comic");
+            var args = Environment.GetCommandLineArgs();
             string username = $"Guest-{Random.Next(10000)}";
 
-            //string username = $"Alef";
-
-            var cor = args.Length > 5 ?
-                new Color(int.Parse(args[4]), int.Parse(args[5]), int.Parse(args[6])) :
-                new Color(Random.Next(255), Random.Next(255), Random.Next(255));
-
-            var player = new Player(square, comic, heart)
-            {
-                Position = new Vector2(100, 100),
-                Username = args.Length >= 4 ? args[3] == "username" ? username : args[3] : username,
-                Bullet = new Bullet(Content.Load<Texture2D>("Bullet")),
-                Color = cor
-            };
+            var player = new Player(square, comic, heart) { Position = new Vector2(100, 100), Username = args.Length >= 7 ? (args[3].Equals("username") ? username : args[3]) : username, Bullet = new Bullet(Content.Load<Texture2D>("Bullet")), Color = new Color(int.Parse(args[4]), int.Parse(args[5]), int.Parse(args[6])) };
 
             if (args.Length >= 4)
-                networkManager = new NetworkManager(Content, square, player.Username, args[1], int.Parse(args[2]), this, comic, new Bullet(Content.Load<Texture2D>("Bullet")), heart, player);
+                networkManager = new NetworkManager(square, args[3].Equals("username") ? username : args[3], args[1], int.Parse(args[2]), this, comic, new Bullet(Content.Load<Texture2D>("Bullet")), heart, player);
             else
-                networkManager = new NetworkManager(Content, square, player.Username, "localhost", 13131, this, comic, new Bullet(Content.Load<Texture2D>("Bullet")), heart, player);
+                networkManager = new NetworkManager(square, username, "localhost", 13131, this, comic, new Bullet(Content.Load<Texture2D>("Bullet")), heart, player);
 
             networkManager.Initialize();
         }
 
+
+        protected override void UnloadContent()
+        {
+
+        }
+
         protected override void Update(GameTime gameTime)
         {
-            client.PollEvents();
-
-
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
-            if (Keyboard.GetState().IsKeyDown(Keys.Left))
-                poz.X -= velocity;
-            if (Keyboard.GetState().IsKeyDown(Keys.Right))
-                poz.X += velocity;
-            if (Keyboard.GetState().IsKeyDown(Keys.Up))
-                poz.Y -= velocity;
-            if (Keyboard.GetState().IsKeyDown(Keys.Down))
-                poz.Y += velocity;
-            // TODO: Add your update logic here
-
-            NetDataWriter writer = new NetDataWriter();                 // Create writer class
-            writer.Put($"{poz.X},{poz.Y}");                                // Put some string
-            client.SendToAll(writer, DeliveryMethod.Unreliable);             // Send with reliability
-
+            text = networkManager.connected ? "CONNECTED" : "DISCONNECTED";
+            size = Font.MeasureString(text);
+            networkManager.Update(gameTime);
+            camera.Follow(networkManager.player);
             base.Update(gameTime);
         }
 
+
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Navy);
-            GraphicsDevice.Clear(Color.TransparentBlack);
+            GraphicsDevice.Clear(Color.Purple);
             spriteBatch.Begin(samplerState: SamplerState.PointClamp /*,transformMatrix: camera.Transform*/);
 
             networkManager.Draw(gameTime, spriteBatch);
@@ -119,9 +97,12 @@ namespace Client
                 if (gameTime.TotalGameTime.TotalSeconds % 2 > 1)
                     spriteBatch.DrawString(Font, "attempting to reconnect", new Vector2((graphics.PreferredBackBufferWidth - txt.X) / 2 + 22, 130), Color.White, 0, new Vector2(0, 0), .8f, SpriteEffects.None, 1);
 
+
+
             spriteBatch.End();
             base.Draw(gameTime);
         }
+
 
         protected override void OnExiting(object sender, EventArgs args)
         {
