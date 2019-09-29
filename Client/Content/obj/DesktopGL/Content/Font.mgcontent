@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PipelineBuildEvent xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SourceFile>C:/Users/Natanael/Downloads/Entregavel/Entregavel/Client/Client/Content/Font.spritefont</SourceFile>
+  <SourceTime>2019-08-10T23:40:36.1784236-03:00</SourceTime>
+  <DestFile>C:/Users/Natanael/Downloads/Entregavel/Entregavel/Client/Client/Content/bin/DesktopGL/Content/Font.xnb</DestFile>
+  <DestTime>2019-09-24T20:46:40.4690996-03:00</DestTime>
+  <Importer>FontDescriptionImporter</Importer>
+  <ImporterTime>2018-12-08T14:35:54-02:00</ImporterTime>
+  <Processor>FontDescriptionProcessor</Processor>
+  <ProcessorTime>2018-12-08T14:35:54-02:00</ProcessorTime>
+  <Parameters>
+    <Key>PremultiplyAlpha</Key>
+    <Value>True</Value>
+  </Parameters>
+  <Parameters>
+    <Key>TextureFormat</Key>
+    <Value>Compressed</Value>
+  </Parameters>
+  <Dependencies />
+  <BuildAsset />
+  <BuildOutput />
+</PipelineBuildEvent>
